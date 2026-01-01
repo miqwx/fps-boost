@@ -16,6 +16,22 @@ L.EnvironmentSpecularScale=0
 L.OutdoorAmbient=Color3.new(0,0,0)
 for _,v in ipairs(L:GetChildren()) do if v:IsA("PostEffect") or v:IsA("Atmosphere") then v:Destroy() end end
 
+    -- REMOVE CÉU
+for _,v in ipairs(Lighting:GetChildren()) do
+    if v:IsA("Sky") then
+        v:Destroy()
+    end
+end
+
+-- REMOVE / SIMPLIFICA ÁGUA
+local Terrain = workspace:FindFirstChildOfClass("Terrain")
+if Terrain then
+    Terrain.WaterWaveSize = 0
+    Terrain.WaterWaveSpeed = 0
+    Terrain.WaterReflectance = 0
+    Terrain.WaterTransparency = 1
+    end
+    
 local nomes={"tree","arvore","plant","bush","grass","folha","leaf","palm","rock","pedra","decor","prop"}
 local function decor(o)
     for _,n in ipairs(nomes) do if o.Name:lower():find(n) then return true end end
