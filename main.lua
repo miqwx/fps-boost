@@ -3,15 +3,18 @@ local P = game:GetService("Players")
 local R = game:GetService("RunService")
 local LP = P.LocalPlayer
 local UIS = game:GetService("UserInputService")
+local CoreGui = game:GetService("CoreGui")
 
--- GUI
-local gui = Instance.new("ScreenGui", LP.PlayerGui)
+-- GUI no CoreGui (mais difícil de ser bloqueado)
+local gui = Instance.new("ScreenGui")
+gui.Name = "FPSBoostMenu"
 gui.ResetOnSpawn = false
+gui.Parent = CoreGui
 
 local panel = Instance.new("Frame", gui)
-panel.Size = UDim2.new(0,280,0,200)
+panel.Size = UDim2.new(0, 280, 0, 200)
 panel.Position = UDim2.new(0,50,0,50)
-panel.BackgroundColor3 = Color3.fromRGB(0,0,0) -- fundo preto
+panel.BackgroundColor3 = Color3.fromRGB(0,0,0)
 panel.BackgroundTransparency = 0.4
 Instance.new("UICorner", panel).CornerRadius = UDim.new(0,12)
 
@@ -20,8 +23,8 @@ local title = Instance.new("TextLabel", panel)
 title.Size = UDim2.new(1,0,0,40)
 title.Position = UDim2.new(0,0,0,0)
 title.BackgroundTransparency = 1
-title.Text = "PAINEL FPS"
-title.TextColor3 = Color3.fromRGB(255,0,0) -- letras vermelhas
+title.Text = "FPS BOOST MENU"
+title.TextColor3 = Color3.fromRGB(255,0,0)
 title.Font = Enum.Font.SourceSansBold
 title.TextSize = 20
 title.TextXAlignment = Enum.TextXAlignment.Center
@@ -64,6 +67,7 @@ fpsLabel.Font = Enum.Font.SourceSansBold
 fpsLabel.TextSize = 18
 fpsLabel.Text = "FPS: 0"
 
+-- FPS real-time
 local c,lastTime=0,tick()
 R.RenderStepped:Connect(function()
     c+=1
@@ -74,7 +78,7 @@ R.RenderStepped:Connect(function()
     end
 end)
 
--- ARRASTAR PAINEL
+-- ARRASTAR PAINEL pelo título
 local dragging=false
 local dragStart=Vector2.new()
 local startPos=UDim2.new()
