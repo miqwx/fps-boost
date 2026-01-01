@@ -44,7 +44,7 @@ end
 task.spawn(function()
     while true do
         skyWaterVigilante()
-        task.wait(0.1)
+        task.wait(0.2) -- seguro e menos agressivo
     end
 end)
 
@@ -55,7 +55,9 @@ local function decor(o)
     if o:IsA("BasePart") then local c=o.Color if c.G>c.R and c.G>c.B and o.Size.Y>4 then return true end end
 end
 
+-- OTIMIZAÇÃO DE OBJETOS (PROTEGE SEU PERSONAGEM)
 local function opt(o)
+    if o:IsDescendantOf(LP.Character) then return end -- protege você
     if o:IsA("BasePart") then
         o.Material=Enum.Material.Plastic
         o.Reflectance=0
@@ -69,8 +71,9 @@ end
 for _,v in ipairs(workspace:GetDescendants()) do opt(v) end
 workspace.DescendantAdded:Connect(function(v) task.wait() opt(v) end)
 
--- REMOVE ACESSÓRIOS/ROUPAS DE OUTROS PLAYERS
+-- REMOVE ACESSÓRIOS/ROUPAS DOS OUTROS PLAYERS
 local function char(c)
+    if c==LP.Character then return end -- protege você
     for _,v in ipairs(c:GetDescendants()) do
         if v:IsA("Accessory") and v:FindFirstChild("Handle") then v.Handle.Transparency=1
         elseif v:IsA("Clothing") then v:Destroy() end
@@ -83,11 +86,11 @@ P.PlayerAdded:Connect(function(p) p.CharacterAdded:Connect(char) end)
 local g=Instance.new("ScreenGui",LP.PlayerGui)
 g.ResetOnSpawn=false
 
-local f=Instance.new("ImageLabel",g) -- imagem de fundo
+local f=Instance.new("ImageLabel",g)
 f.Size=UDim2.new(0,180,0,50)
 f.Position=UDim2.new(0,10,0,10)
 f.BackgroundTransparency=1
-f.Image="rbxassetid://0" -- troque 0 pelo ID da sua imagem
+f.Image="rbxassetid://0" -- substitua 0 pelo ID da sua imagem
 f.ScaleType=Enum.ScaleType.Stretch
 Instance.new("UICorner",f).CornerRadius=UDim.new(0,8)
 
