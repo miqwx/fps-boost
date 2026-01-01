@@ -64,41 +64,44 @@ panel.BackgroundColor3 = Color3.fromRGB(0, 0, 0) -- Fundo preto
 panel.BackgroundTransparency = 0.4
 Instance.new("UICorner", panel).CornerRadius = UDim.new(0, 12)
 
--- BOTÃO FECHAR / ABRIR
-local closeBtn = Instance.new("TextButton", panel)
-closeBtn.Size = UDim2.new(0, 30, 0, 30)
-closeBtn.Position = UDim2.new(1, -35, 0, 5)
-closeBtn.Text = "X"
-closeBtn.TextColor3 = Color3.fromRGB(255, 0, 0) -- Letras vermelhas
-closeBtn.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
-closeBtn.Font = Enum.Font.SourceSansBold
-closeBtn.TextSize = 18
-Instance.new("UICorner", closeBtn).CornerRadius = UDim.new(0, 5)
-
-local isOpen = true
-closeBtn.MouseButton1Click:Connect(function()
-    isOpen = not isOpen
-    for _,v in ipairs(panel:GetChildren()) do
-        if v ~= closeBtn then v.Visible = isOpen end
-    end
-end)
-
--- Título
+-- Título (barra de arrastar)
 local title = Instance.new("TextLabel", panel)
-title.Size = UDim2.new(1, -40, 0, 50)
-title.Position = UDim2.new(0, 10, 0, 0)
+title.Size = UDim2.new(1, 0, 0, 50)
+title.Position = UDim2.new(0, 0, 0, 0)
 title.BackgroundTransparency = 1
 title.Text = "FPS BOOST MENU EXTREME"
 title.TextColor3 = Color3.fromRGB(255, 0, 0) -- Letras vermelhas
 title.Font = Enum.Font.SourceSansBold
 title.TextSize = 22
+title.TextXAlignment = Enum.TextXAlignment.Center
+
+-- Botão fechar
+local closeBtn = Instance.new("TextButton", panel)
+closeBtn.Size = UDim2.new(0, 30, 0, 30)
+closeBtn.Position = UDim2.new(1, -35, 0, 10)
+closeBtn.Text = "X"
+closeBtn.TextColor3 = Color3.fromRGB(255,0,0)
+closeBtn.BackgroundColor3 = Color3.fromRGB(50,50,50)
+closeBtn.Font = Enum.Font.SourceSansBold
+closeBtn.TextSize = 18
+Instance.new("UICorner", closeBtn).CornerRadius = UDim.new(0,5)
+
+local isOpen = true
+closeBtn.MouseButton1Click:Connect(function()
+    isOpen = not isOpen
+    for _,v in ipairs(panel:GetChildren()) do
+        if v ~= title and v ~= closeBtn then
+            v.Visible = isOpen
+        end
+    end
+end)
 
 -- FPS Label
 local fpsLabel = Instance.new("TextLabel", panel)
 fpsLabel.Size = UDim2.new(1, -20, 0, 30)
 fpsLabel.Position = UDim2.new(0, 10, 0, 60)
 fpsLabel.BackgroundTransparency = 1
-fpsLabel.TextColor3 = Color3.fromRGB(255, 0, 0) -- Letras vermelhas
+fpsLabel.TextColor3 = Color3.fromRGB(255,0,0)
 fpsLabel.Font = Enum.Font.SourceSansBold
 fpsLabel.TextSize = 18
 fpsLabel.Text = "FPS: 0"
@@ -121,11 +124,11 @@ local function createToggleButton(name, posY, func)
     btn.Size = UDim2.new(1, -20, 0, 45)
     btn.Position = UDim2.new(0, 10, 0, posY)
     btn.Text = name.." [OFF]"
-    btn.BackgroundColor3 = Color3.fromRGB(0, 0, 0) -- Fundo preto
-    btn.TextColor3 = Color3.fromRGB(255, 0, 0) -- Letras vermelhas
+    btn.BackgroundColor3 = Color3.fromRGB(0,0,0)
+    btn.TextColor3 = Color3.fromRGB(255,0,0)
     btn.Font = Enum.Font.SourceSansBold
     btn.TextSize = 16
-    Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 6)
+    Instance.new("UICorner", btn).CornerRadius = UDim.new(0,6)
 
     btn.MouseButton1Click:Connect(function()
         state = not state
@@ -133,8 +136,8 @@ local function createToggleButton(name, posY, func)
         if state then func() end
     end)
 
-    btn.MouseEnter:Connect(function() btn.BackgroundColor3 = Color3.fromRGB(30, 30, 30) end)
-    btn.MouseLeave:Connect(function() btn.BackgroundColor3 = Color3.fromRGB(0, 0, 0) end)
+    btn.MouseEnter:Connect(function() btn.BackgroundColor3 = Color3.fromRGB(30,30,30) end)
+    btn.MouseLeave:Connect(function() btn.BackgroundColor3 = Color3.fromRGB(0,0,0) end)
 end
 
 -- Botões toggles
@@ -142,11 +145,11 @@ createToggleButton("FPS Boost", 110, fpsBoost)
 createToggleButton("Remover Decorações", 170, removeDecor)
 createToggleButton("Invisibilizar Players", 230, invisPlayers)
 
--- MOVIMENTAR O PAINEL
+-- MOVIMENTAR O PAINEL (clicando na barra de título)
 local dragging = false
 local dragInput, mousePos, framePos
 
-panel.InputBegan:Connect(function(input)
+title.InputBegan:Connect(function(input)
     if input.UserInputType == Enum.UserInputType.MouseButton1 then
         dragging = true
         mousePos = input.Position
@@ -159,7 +162,7 @@ panel.InputBegan:Connect(function(input)
     end
 end)
 
-panel.InputChanged:Connect(function(input)
+title.InputChanged:Connect(function(input)
     if input.UserInputType == Enum.UserInputType.MouseMovement then
         dragInput = input
     end
