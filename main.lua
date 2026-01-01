@@ -61,7 +61,7 @@ gui.ResetOnSpawn = false
 local panel = Instance.new("Frame", gui)
 panel.Size = UDim2.new(0, 280, 0, 360)
 panel.Position = UDim2.new(0, 10, 0, 10)
-panel.BackgroundColor3 = Color3.fromRGB(0,0,0) -- fundo preto
+panel.BackgroundColor3 = Color3.fromRGB(0,0,0)
 panel.BackgroundTransparency = 0.4
 Instance.new("UICorner", panel).CornerRadius = UDim.new(0,12)
 
@@ -137,42 +137,4 @@ local function createToggleButton(name,posY,func)
     end)
 
     btn.MouseEnter:Connect(function() btn.BackgroundColor3=Color3.fromRGB(30,30,30) end)
-    btn.MouseLeave:Connect(function() btn.BackgroundColor3=Color3.fromRGB(0,0,0) end)
-end
-
-createToggleButton("FPS Boost",110,fpsBoost)
-createToggleButton("Remover Decorações",170,removeDecor)
-createToggleButton("Invisibilizar Players",230,invisPlayers)
-
--- ARRASTAR PAINEL
-local dragging=false
-local dragStart=Vector2.new()
-local startPos=UDim2.new()
-
-UIS.InputBegan:Connect(function(input)
-    if input.UserInputType==Enum.UserInputType.MouseButton1 then
-        local mousePos=UIS:GetMouseLocation()
-        if mousePos.Y>=panel.AbsolutePosition.Y and mousePos.Y<=panel.AbsolutePosition.Y+title.AbsoluteSize.Y and
-           mousePos.X>=panel.AbsolutePosition.X and mousePos.X<=panel.AbsolutePosition.X+panel.AbsoluteSize.X then
-            dragging=true
-            dragStart=mousePos
-            startPos=panel.Position
-        end
-    end
-end)
-
-UIS.InputChanged:Connect(function(input)
-    if input.UserInputType==Enum.UserInputType.MouseMovement then
-        if dragging then
-            local delta=UIS:GetMouseLocation()-dragStart
-            panel.Position=UDim2.new(startPos.X.Scale, startPos.X.Offset+delta.X, startPos.Y.Scale, startPos.Y.Offset+delta.Y)
-        end
-    end
-end)
-
-UIS.InputEnded:Connect(function(input)
-    if input.UserInputType==Enum.UserInputType.MouseButton1 then
-        dragging=false
-    end
-end)
-end
+    btn.MouseLeave:Connect(function() btn.Background
