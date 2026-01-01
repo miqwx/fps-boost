@@ -4,7 +4,7 @@ local L=game:GetService("Lighting")
 local R=game:GetService("RunService")
 local LP=P.LocalPlayer
 
--- CONFIGURAÇÃO RÁPIDA DE GRÁFICOS
+-- CONFIGURAÇÃO GRÁFICA
 pcall(function() settings().Rendering.QualityLevel=Enum.QualityLevel.Level01 end)
 
 -- LIGHTING ULTRA LEVE
@@ -14,38 +14,39 @@ L.Brightness=0
 L.EnvironmentDiffuseScale=0
 L.EnvironmentSpecularScale=0
 L.OutdoorAmbient=Color3.new(0,0,0)
-for _,v in ipairs(L:GetChildren()) do
-    if v:IsA("PostEffect") or v:IsA("Atmosphere") then v:Destroy() end
-end
+for _,v in ipairs(L:GetChildren()) do if v:IsA("PostEffect") or v:IsA("Atmosphere") then v:Destroy() end end
 
--- FUNÇÃO PARA REMOVER CÉU E ÁGUA
-local function removeSkyWater()
-    -- CÉU
+-- FUNÇÃO “VIGILANTE” DE CÉU E ÁGUA
+local function skyWaterVigilante()
+    -- Céu
     for _,v in ipairs(L:GetChildren()) do if v:IsA("Sky") then v:Destroy() end end
     for _,v in ipairs(workspace:GetChildren()) do if v:IsA("Sky") then v:Destroy() end end
-    -- ÁGUA DO TERRAIN
-    local Terrain=workspace:FindFirstChildOfClass("Terrain")
-    if Terrain then
-        Terrain.WaterWaveSize=0
-        Terrain.WaterWaveSpeed=0
-        Terrain.WaterReflectance=0
-        Terrain.WaterTransparency=1
+    -- Água do Terrain
+    local T=workspace:FindFirstChildOfClass("Terrain")
+    if T then
+        T.WaterWaveSize=0
+        T.WaterWaveSpeed=0
+        T.WaterReflectance=0
+        T.WaterTransparency=1
     end
-    -- ÁGUA COMO PARTS
+    -- Água como partes (BaseParts azuis grandes)
     for _,v in ipairs(workspace:GetDescendants()) do
         if v:IsA("BasePart") then
             local c=v.Color
-            if c.B>c.R and c.B>c.G and v.Size.Y<20 and v.Name:lower():find("water") then
+            if c.B>c.R and c.B>c.G and v.Size.Y<20 then
                 v:Destroy()
             end
         end
     end
 end
 
--- REMOVE CÉU E ÁGUA IMEDIATAMENTE
-removeSkyWater()
--- MONITORA O JOGO CONTINUAMENTE
-R.RenderStepped:Connect(removeSkyWater)
+-- Roda continuamente para remover qualquer água/céu recriados
+task.spawn(function()
+    while true do
+        skyWaterVigilante()
+        task.wait(0.1)
+    end
+end)
 
 -- FUNÇÃO PARA REMOVER DECORAÇÕES/ÁRVORES
 local nomes={"tree","arvore","plant","bush","grass","folha","leaf","palm","rock","pedra","decor","prop"}
@@ -68,7 +69,7 @@ end
 for _,v in ipairs(workspace:GetDescendants()) do opt(v) end
 workspace.DescendantAdded:Connect(function(v) task.wait() opt(v) end)
 
--- REMOVE ACESSÓRIOS E ROUPAS DOS PLAYERS
+-- REMOVE ACESSÓRIOS/ROUPAS DE OUTROS PLAYERS
 local function char(c)
     for _,v in ipairs(c:GetDescendants()) do
         if v:IsA("Accessory") and v:FindFirstChild("Handle") then v.Handle.Transparency=1
@@ -78,14 +79,16 @@ end
 for _,p in ipairs(P:GetPlayers()) do if p.Character then char(p.Character) end end
 P.PlayerAdded:Connect(function(p) p.CharacterAdded:Connect(char) end)
 
--- PAINEL DE FPS
+-- PAINEL DE FPS COM IMAGEM DE FUNDO
 local g=Instance.new("ScreenGui",LP.PlayerGui)
 g.ResetOnSpawn=false
-local f=Instance.new("Frame",g)
-f.Size=UDim2.new(0,140,0,40)
+
+local f=Instance.new("ImageLabel",g) -- imagem de fundo
+f.Size=UDim2.new(0,180,0,50)
 f.Position=UDim2.new(0,10,0,10)
-f.BackgroundTransparency=0.6
-f.BackgroundColor3=Color3.new(0,0,0)
+f.BackgroundTransparency=1
+f.Image="rbxassetid://0" -- troque 0 pelo ID da sua imagem
+f.ScaleType=Enum.ScaleType.Stretch
 Instance.new("UICorner",f).CornerRadius=UDim.new(0,8)
 
 local t=Instance.new("TextLabel",f)
@@ -94,6 +97,7 @@ t.BackgroundTransparency=1
 t.TextColor3=Color3.fromRGB(0,255,0)
 t.Font=Enum.Font.SourceSansBold
 t.TextSize=18
+t.TextStrokeTransparency=0.5
 
 local c,lt=0,tick()
 R.RenderStepped:Connect(function()
