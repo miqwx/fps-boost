@@ -3,18 +3,13 @@ local P = game:GetService("Players")
 local R = game:GetService("RunService")
 local LP = P.LocalPlayer
 
--- 🔹 Remover limite de FPS (quando possível)
+-- 🔹 Remover limite de FPS
 pcall(function()
     settings().Rendering.PhysicsFPS = 0
     settings().Rendering.FramesPerSecond = 0
 end)
 
--- CONFIGURAÇÃO GRÁFICA (aplicada via toggle)
-local function applyGraphics()
-    pcall(function() settings().Rendering.QualityLevel = Enum.QualityLevel.Level01 end)
-end
-
--- FUNÇÃO PARA REMOVER DECORAÇÕES/ÁRVORES
+-- FUNÇÕES DE OTIMIZAÇÃO
 local nomes = {"tree","arvore","plant","bush","grass","folha","leaf","palm","rock","pedra","decor","prop"}
 local function decor(o)
     for _,n in ipairs(nomes) do if o.Name:lower():find(n) then return true end end
@@ -33,7 +28,10 @@ local function opt(o)
     elseif (o:IsA("Model") or o:IsA("Folder")) and decor(o) then o:Destroy() end
 end
 
--- FUNÇÕES DO MENU
+local function applyGraphics()
+    pcall(function() settings().Rendering.QualityLevel = Enum.QualityLevel.Level01 end)
+end
+
 local function fpsBoost()
     applyGraphics()
     for _,v in ipairs(workspace:GetDescendants()) do opt(v) end
@@ -55,24 +53,43 @@ local function invisPlayers()
     for _,p in ipairs(P:GetPlayers()) do if p.Character and p ~= LP then char(p.Character) end end
 end
 
--- MENU GUI
+-- GUI
 local gui = Instance.new("ScreenGui", LP.PlayerGui)
 gui.ResetOnSpawn = false
 
 local panel = Instance.new("Frame", gui)
 panel.Size = UDim2.new(0, 280, 0, 360)
 panel.Position = UDim2.new(0, 10, 0, 10)
-panel.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+panel.BackgroundColor3 = Color3.fromRGB(0, 0, 0) -- Fundo preto
 panel.BackgroundTransparency = 0.4
 Instance.new("UICorner", panel).CornerRadius = UDim.new(0, 12)
 
+-- BOTÃO FECHAR / ABRIR
+local closeBtn = Instance.new("TextButton", panel)
+closeBtn.Size = UDim2.new(0, 30, 0, 30)
+closeBtn.Position = UDim2.new(1, -35, 0, 5)
+closeBtn.Text = "X"
+closeBtn.TextColor3 = Color3.fromRGB(255, 0, 0) -- Letras vermelhas
+closeBtn.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+closeBtn.Font = Enum.Font.SourceSansBold
+closeBtn.TextSize = 18
+Instance.new("UICorner", closeBtn).CornerRadius = UDim.new(0, 5)
+
+local isOpen = true
+closeBtn.MouseButton1Click:Connect(function()
+    isOpen = not isOpen
+    for _,v in ipairs(panel:GetChildren()) do
+        if v ~= closeBtn then v.Visible = isOpen end
+    end
+end)
+
 -- Título
 local title = Instance.new("TextLabel", panel)
-title.Size = UDim2.new(1, 0, 0, 50)
-title.Position = UDim2.new(0, 0, 0, 0)
+title.Size = UDim2.new(1, -40, 0, 50)
+title.Position = UDim2.new(0, 10, 0, 0)
 title.BackgroundTransparency = 1
 title.Text = "FPS BOOST MENU EXTREME"
-title.TextColor3 = Color3.fromRGB(0, 255, 0)
+title.TextColor3 = Color3.fromRGB(255, 0, 0) -- Letras vermelhas
 title.Font = Enum.Font.SourceSansBold
 title.TextSize = 22
 
@@ -81,7 +98,7 @@ local fpsLabel = Instance.new("TextLabel", panel)
 fpsLabel.Size = UDim2.new(1, -20, 0, 30)
 fpsLabel.Position = UDim2.new(0, 10, 0, 60)
 fpsLabel.BackgroundTransparency = 1
-fpsLabel.TextColor3 = Color3.fromRGB(0, 255, 0)
+fpsLabel.TextColor3 = Color3.fromRGB(255, 0, 0) -- Letras vermelhas
 fpsLabel.Font = Enum.Font.SourceSansBold
 fpsLabel.TextSize = 18
 fpsLabel.Text = "FPS: 0"
@@ -97,33 +114,61 @@ R.RenderStepped:Connect(function()
     end
 end)
 
--- Função para criar botões toggle
+-- Função criar botões toggle
 local function createToggleButton(name, posY, func)
     local state = false
     local btn = Instance.new("TextButton", panel)
     btn.Size = UDim2.new(1, -20, 0, 45)
     btn.Position = UDim2.new(0, 10, 0, posY)
     btn.Text = name.." [OFF]"
-    btn.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
-    btn.TextColor3 = Color3.fromRGB(0, 255, 0)
+    btn.BackgroundColor3 = Color3.fromRGB(0, 0, 0) -- Fundo preto
+    btn.TextColor3 = Color3.fromRGB(255, 0, 0) -- Letras vermelhas
     btn.Font = Enum.Font.SourceSansBold
     btn.TextSize = 16
-    local corner = Instance.new("UICorner", btn)
-    corner.CornerRadius = UDim.new(0, 6)
-    
+    Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 6)
+
     btn.MouseButton1Click:Connect(function()
         state = not state
         btn.Text = name.." ["..(state and "ON" or "OFF").."]"
         if state then func() end
     end)
-    
-    -- Hover visual
-    btn.MouseEnter:Connect(function() btn.BackgroundColor3 = Color3.fromRGB(70, 70, 70) end)
-    btn.MouseLeave:Connect(function() btn.BackgroundColor3 = Color3.fromRGB(50, 50, 50) end)
+
+    btn.MouseEnter:Connect(function() btn.BackgroundColor3 = Color3.fromRGB(30, 30, 30) end)
+    btn.MouseLeave:Connect(function() btn.BackgroundColor3 = Color3.fromRGB(0, 0, 0) end)
 end
 
 -- Botões toggles
 createToggleButton("FPS Boost", 110, fpsBoost)
 createToggleButton("Remover Decorações", 170, removeDecor)
 createToggleButton("Invisibilizar Players", 230, invisPlayers)
+
+-- MOVIMENTAR O PAINEL
+local dragging = false
+local dragInput, mousePos, framePos
+
+panel.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 then
+        dragging = true
+        mousePos = input.Position
+        framePos = panel.Position
+        input.Changed:Connect(function()
+            if input.UserInputState == Enum.UserInputState.End then
+                dragging = false
+            end
+        end)
+    end
+end)
+
+panel.InputChanged:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseMovement then
+        dragInput = input
+    end
+end)
+
+R.RenderStepped:Connect(function()
+    if dragging and dragInput then
+        local delta = dragInput.Position - mousePos
+        panel.Position = UDim2.new(framePos.X.Scale, framePos.X.Offset + delta.X, framePos.Y.Scale, framePos.Y.Offset + delta.Y)
+    end
+end)
 end
