@@ -2,6 +2,7 @@ do
 local P = game:GetService("Players")
 local R = game:GetService("RunService")
 local LP = P.LocalPlayer
+local UIS = game:GetService("UserInputService")
 
 -- 🔹 Remover limite de FPS
 pcall(function()
@@ -60,25 +61,25 @@ gui.ResetOnSpawn = false
 local panel = Instance.new("Frame", gui)
 panel.Size = UDim2.new(0, 280, 0, 360)
 panel.Position = UDim2.new(0, 10, 0, 10)
-panel.BackgroundColor3 = Color3.fromRGB(0, 0, 0) -- Fundo preto
+panel.BackgroundColor3 = Color3.fromRGB(0,0,0) -- fundo preto
 panel.BackgroundTransparency = 0.4
-Instance.new("UICorner", panel).CornerRadius = UDim.new(0, 12)
+Instance.new("UICorner", panel).CornerRadius = UDim.new(0,12)
 
--- Título (barra de arrastar)
+-- Barra de título
 local title = Instance.new("TextLabel", panel)
-title.Size = UDim2.new(1, 0, 0, 50)
-title.Position = UDim2.new(0, 0, 0, 0)
+title.Size = UDim2.new(1,0,0,50)
+title.Position = UDim2.new(0,0,0,0)
 title.BackgroundTransparency = 1
 title.Text = "FPS BOOST MENU EXTREME"
-title.TextColor3 = Color3.fromRGB(255, 0, 0) -- Letras vermelhas
+title.TextColor3 = Color3.fromRGB(255,0,0)
 title.Font = Enum.Font.SourceSansBold
 title.TextSize = 22
 title.TextXAlignment = Enum.TextXAlignment.Center
 
 -- Botão fechar
 local closeBtn = Instance.new("TextButton", panel)
-closeBtn.Size = UDim2.new(0, 30, 0, 30)
-closeBtn.Position = UDim2.new(1, -35, 0, 10)
+closeBtn.Size = UDim2.new(0,30,0,30)
+closeBtn.Position = UDim2.new(1,-35,0,10)
 closeBtn.Text = "X"
 closeBtn.TextColor3 = Color3.fromRGB(255,0,0)
 closeBtn.BackgroundColor3 = Color3.fromRGB(50,50,50)
@@ -98,80 +99,80 @@ end)
 
 -- FPS Label
 local fpsLabel = Instance.new("TextLabel", panel)
-fpsLabel.Size = UDim2.new(1, -20, 0, 30)
-fpsLabel.Position = UDim2.new(0, 10, 0, 60)
+fpsLabel.Size = UDim2.new(1,-20,0,30)
+fpsLabel.Position = UDim2.new(0,10,0,60)
 fpsLabel.BackgroundTransparency = 1
 fpsLabel.TextColor3 = Color3.fromRGB(255,0,0)
 fpsLabel.Font = Enum.Font.SourceSansBold
 fpsLabel.TextSize = 18
 fpsLabel.Text = "FPS: 0"
 
--- FPS contador
-local c, lastTime = 0, tick()
+local c,lastTime=0,tick()
 R.RenderStepped:Connect(function()
-    c += 1
-    if tick() - lastTime >= 1 then
-        fpsLabel.Text = "FPS: "..c
-        c = 0
-        lastTime = tick()
+    c+=1
+    if tick()-lastTime>=1 then
+        fpsLabel.Text="FPS: "..c
+        c=0
+        lastTime=tick()
     end
 end)
 
 -- Função criar botões toggle
-local function createToggleButton(name, posY, func)
-    local state = false
-    local btn = Instance.new("TextButton", panel)
-    btn.Size = UDim2.new(1, -20, 0, 45)
-    btn.Position = UDim2.new(0, 10, 0, posY)
-    btn.Text = name.." [OFF]"
-    btn.BackgroundColor3 = Color3.fromRGB(0,0,0)
-    btn.TextColor3 = Color3.fromRGB(255,0,0)
-    btn.Font = Enum.Font.SourceSansBold
-    btn.TextSize = 16
-    Instance.new("UICorner", btn).CornerRadius = UDim.new(0,6)
+local function createToggleButton(name,posY,func)
+    local state=false
+    local btn=Instance.new("TextButton",panel)
+    btn.Size=UDim2.new(1,-20,0,45)
+    btn.Position=UDim2.new(0,10,0,posY)
+    btn.Text=name.." [OFF]"
+    btn.BackgroundColor3=Color3.fromRGB(0,0,0)
+    btn.TextColor3=Color3.fromRGB(255,0,0)
+    btn.Font=Enum.Font.SourceSansBold
+    btn.TextSize=16
+    Instance.new("UICorner",btn).CornerRadius=UDim.new(0,6)
 
     btn.MouseButton1Click:Connect(function()
-        state = not state
-        btn.Text = name.." ["..(state and "ON" or "OFF").."]"
+        state=not state
+        btn.Text=name.." ["..(state and "ON" or "OFF").."]"
         if state then func() end
     end)
 
-    btn.MouseEnter:Connect(function() btn.BackgroundColor3 = Color3.fromRGB(30,30,30) end)
-    btn.MouseLeave:Connect(function() btn.BackgroundColor3 = Color3.fromRGB(0,0,0) end)
+    btn.MouseEnter:Connect(function() btn.BackgroundColor3=Color3.fromRGB(30,30,30) end)
+    btn.MouseLeave:Connect(function() btn.BackgroundColor3=Color3.fromRGB(0,0,0) end)
 end
 
--- Botões toggles
-createToggleButton("FPS Boost", 110, fpsBoost)
-createToggleButton("Remover Decorações", 170, removeDecor)
-createToggleButton("Invisibilizar Players", 230, invisPlayers)
+createToggleButton("FPS Boost",110,fpsBoost)
+createToggleButton("Remover Decorações",170,removeDecor)
+createToggleButton("Invisibilizar Players",230,invisPlayers)
 
--- MOVIMENTAR O PAINEL (clicando na barra de título)
-local dragging = false
-local dragInput, mousePos, framePos
+-- ARRASTAR PAINEL
+local dragging=false
+local dragStart=Vector2.new()
+local startPos=UDim2.new()
 
-title.InputBegan:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseButton1 then
-        dragging = true
-        mousePos = input.Position
-        framePos = panel.Position
-        input.Changed:Connect(function()
-            if input.UserInputState == Enum.UserInputState.End then
-                dragging = false
-            end
-        end)
+UIS.InputBegan:Connect(function(input)
+    if input.UserInputType==Enum.UserInputType.MouseButton1 then
+        local mousePos=UIS:GetMouseLocation()
+        if mousePos.Y>=panel.AbsolutePosition.Y and mousePos.Y<=panel.AbsolutePosition.Y+title.AbsoluteSize.Y and
+           mousePos.X>=panel.AbsolutePosition.X and mousePos.X<=panel.AbsolutePosition.X+panel.AbsoluteSize.X then
+            dragging=true
+            dragStart=mousePos
+            startPos=panel.Position
+        end
     end
 end)
 
-title.InputChanged:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseMovement then
-        dragInput = input
+UIS.InputChanged:Connect(function(input)
+    if input.UserInputType==Enum.UserInputType.MouseMovement then
+        if dragging then
+            local delta=UIS:GetMouseLocation()-dragStart
+            panel.Position=UDim2.new(startPos.X.Scale, startPos.X.Offset+delta.X, startPos.Y.Scale, startPos.Y.Offset+delta.Y)
+        end
     end
 end)
 
-R.RenderStepped:Connect(function()
-    if dragging and dragInput then
-        local delta = dragInput.Position - mousePos
-        panel.Position = UDim2.new(framePos.X.Scale, framePos.X.Offset + delta.X, framePos.Y.Scale, framePos.Y.Offset + delta.Y)
+UIS.InputEnded:Connect(function(input)
+    if input.UserInputType==Enum.UserInputType.MouseButton1 then
+        dragging=false
     end
 end)
 end
