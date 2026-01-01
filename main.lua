@@ -6,8 +6,6 @@ local LP=P.LocalPlayer
 
 -- CONFIGURAÇÃO GRÁFICA
 pcall(function() settings().Rendering.QualityLevel=Enum.QualityLevel.Level01 end)
-
--- LIGHTING ULTRA LEVE
 L.GlobalShadows=false
 L.FogEnd=9e9
 L.Brightness=0
@@ -35,7 +33,6 @@ local function opt(o)
     elseif o:IsA("ParticleEmitter") or o:IsA("Trail") or o:IsA("Fire") or o:IsA("Smoke") or o:IsA("Sparkles") then o.Enabled=false
     elseif (o:IsA("Model") or o:IsA("Folder")) and decor(o) then o:Destroy() end
 end
-
 for _,v in ipairs(workspace:GetDescendants()) do opt(v) end
 workspace.DescendantAdded:Connect(function(v) task.wait() opt(v) end)
 
@@ -55,24 +52,31 @@ local g=Instance.new("ScreenGui",LP.PlayerGui)
 g.ResetOnSpawn=false
 
 local f=Instance.new("ImageLabel",g)
-f.Size=UDim2.new(0,180,0,50)
+f.Size=UDim2.new(0,200,0,60)
 f.Position=UDim2.new(0,10,0,10)
-f.BackgroundTransparency=1
+f.BackgroundTransparency=0.5
+f.BackgroundColor3=Color3.new(0,0,0)
 f.Image="rbxassetid://0" -- substitua 0 pelo ID da sua imagem
 f.ScaleType=Enum.ScaleType.Stretch
-Instance.new("UICorner",f).CornerRadius=UDim.new(0,8)
+Instance.new("UICorner",f).CornerRadius=UDim.new(0,10)
 
 local t=Instance.new("TextLabel",f)
 t.Size=UDim2.fromScale(1,1)
 t.BackgroundTransparency=1
 t.TextColor3=Color3.fromRGB(0,255,0)
 t.Font=Enum.Font.SourceSansBold
-t.TextSize=18
+t.TextSize=20
 t.TextStrokeTransparency=0.5
+t.Text="FPS: 0"
 
+-- Contador de FPS
 local c,lt=0,tick()
 R.RenderStepped:Connect(function()
     c+=1
-    if tick()-lt>=1 then t.Text="FPS: "..c c=0 lt=tick() end
+    if tick()-lt>=1 then
+        t.Text="FPS: "..c
+        c=0
+        lt=tick()
+    end
 end)
 end
