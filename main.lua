@@ -16,38 +16,6 @@ L.EnvironmentSpecularScale=0
 L.OutdoorAmbient=Color3.new(0,0,0)
 for _,v in ipairs(L:GetChildren()) do if v:IsA("PostEffect") or v:IsA("Atmosphere") then v:Destroy() end end
 
--- FUNÇÃO “VIGILANTE” DE CÉU E ÁGUA
-local function skyWaterVigilante()
-    -- Céu
-    for _,v in ipairs(L:GetChildren()) do if v:IsA("Sky") then v:Destroy() end end
-    for _,v in ipairs(workspace:GetChildren()) do if v:IsA("Sky") then v:Destroy() end end
-    -- Água do Terrain
-    local T=workspace:FindFirstChildOfClass("Terrain")
-    if T then
-        T.WaterWaveSize=0
-        T.WaterWaveSpeed=0
-        T.WaterReflectance=0
-        T.WaterTransparency=1
-    end
-    -- Água como partes (BaseParts azuis grandes)
-    for _,v in ipairs(workspace:GetDescendants()) do
-        if v:IsA("BasePart") then
-            local c=v.Color
-            if c.B>c.R and c.B>c.G and v.Size.Y<20 then
-                v:Destroy()
-            end
-        end
-    end
-end
-
--- Roda continuamente para remover qualquer água/céu recriados
-task.spawn(function()
-    while true do
-        skyWaterVigilante()
-        task.wait(0.2) -- seguro e menos agressivo
-    end
-end)
-
 -- FUNÇÃO PARA REMOVER DECORAÇÕES/ÁRVORES
 local nomes={"tree","arvore","plant","bush","grass","folha","leaf","palm","rock","pedra","decor","prop"}
 local function decor(o)
