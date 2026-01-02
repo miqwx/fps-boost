@@ -1,171 +1,137 @@
-do
--- SERVIÇOS
-local P = game:GetService("Players")
+--[[
+📌 LocalScript compacto
+- FPS Boost extremo
+- FOV Circle ajustável (Q/E)
+- Lock-on 99% (Tiros vão no alvo travado)
+- Seguro para seu próprio jogo
+]]
+
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local UserInputService = game:GetService("UserInputService")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local Workspace = game:GetService("Workspace")
+local LocalPlayer = Players.LocalPlayer
+local PlayerGui = LocalPlayer:WaitForChild("PlayerGui")
+
+-- ========== FPS BOOST ==========
+pcall(function() settings().Rendering.QualityLevel=Enum.QualityLevel.Level01 end)
 local L = game:GetService("Lighting")
-local R = game:GetService("RunService")
-local W = workspace
-local Cam = W.CurrentCamera
-local LP = P.LocalPlayer
+L.GlobalShadows=false
+L.FogEnd=1e9
+L.Brightness=0
+L.EnvironmentDiffuseScale=0
+L.EnvironmentSpecularScale=0
+L.OutdoorAmbient=Color3.new(0,0,0)
+for _,v in ipairs(L:GetChildren()) do if v:IsA("PostEffect") or v:IsA("Atmosphere") then v:Destroy() end end
 
---------------------------------------------------
--- FPS BOOST
-pcall(function()
-    settings().Rendering.QualityLevel = Enum.QualityLevel.Level01
-end)
-
-L.GlobalShadows = false
-L.FogEnd = 9e9
-L.Brightness = 0
-L.EnvironmentDiffuseScale = 0
-L.EnvironmentSpecularScale = 0
-L.OutdoorAmbient = Color3.new(0,0,0)
-
-for _,v in ipairs(L:GetChildren()) do
-    if v:IsA("PostEffect") or v:IsA("Atmosphere") then
-        v:Destroy()
-    end
+local function decor(o)
+    local nomes={"tree","arvore","plant","bush","grass","folha","leaf","palm","rock","pedra","decor","prop"}
+    for _,n in ipairs(nomes) do if o.Name:lower():find(n) then return true end end
+    if o:IsA("BasePart") then local c=o.Color if c.G>c.R and c.G>c.B and o.Size.Y>4 then return true end end
 end
 
---------------------------------------------------
--- REMOVE ÁRVORES / DECORAÇÕES
-local treeNames = {"tree","arvore","palm","leaf","folha","bush","plant"}
-
-local function isTree(o)
-    for _,n in ipairs(treeNames) do
-        if o.Name:lower():find(n) then
-            return true
-        end
-    end
-end
-
-local function optimize(o)
-    for _,plr in ipairs(P:GetPlayers()) do
-        if plr.Character and o:IsDescendantOf(plr.Character) then
-            return
-        end
-    end
-
+local function opt(o)
+    if o:IsDescendantOf(LocalPlayer.Character) then return end
     if o:IsA("BasePart") then
-        o.Material = Enum.Material.Plastic
-        o.CastShadow = false
-        if isTree(o) then
-            o:Destroy()
-        end
-    elseif o:IsA("ParticleEmitter")
-        or o:IsA("Trail")
-        or o:IsA("Fire")
-        or o:IsA("Smoke") then
-        o.Enabled = false
-    end
+        o.Material=Enum.Material.Plastic
+        o.Reflectance=0
+        o.CastShadow=false
+        if decor(o) then o:Destroy() end
+    elseif o:IsA("Decal") or o:IsA("Texture") then o.Transparency=1
+    elseif o:IsA("ParticleEmitter") or o:IsA("Trail") or o:IsA("Fire") or o:IsA("Smoke") or o:IsA("Sparkles") then o.Enabled=false
+    elseif (o:IsA("Model") or o:IsA("Folder")) and decor(o) then o:Destroy() end
 end
 
-for _,v in ipairs(W:GetDescendants()) do
-    optimize(v)
-end
-W.DescendantAdded:Connect(function(v)
-    task.wait()
-    optimize(v)
-end)
+for _,v in ipairs(workspace:GetDescendants()) do opt(v) end
+workspace.DescendantAdded:Connect(function(v) task.wait() opt(v) end)
 
---------------------------------------------------
--- ESP AVANÇADO
-local ESPFolder = Instance.new("Folder", LP.PlayerGui)
-ESPFolder.Name = "ESP"
-
-local ESP = {}
-
-local function createESP(player)
-    if player == LP then return end
-    if not player.Character or not player.Character:FindFirstChild("HumanoidRootPart") then return end
-
-    local hrp = player.Character.HumanoidRootPart
-
-    local box = Instance.new("BoxHandleAdornment")
-    box.Adornee = hrp
-    box.Size = Vector3.new(2,5,1)
-    box.Color3 = Color3.fromRGB(255,0,0)
-    box.Transparency = 0.5
-    box.AlwaysOnTop = true
-    box.ZIndex = 10
-    box.Parent = ESPFolder
-
-    local gui = Instance.new("BillboardGui")
-    gui.Adornee = player.Character:FindFirstChild("Head") or hrp
-    gui.Size = UDim2.new(0,120,0,40)
-    gui.AlwaysOnTop = true
-    gui.Parent = ESPFolder
-
-    local txt = Instance.new("TextLabel", gui)
-    txt.Size = UDim2.fromScale(1,1)
-    txt.BackgroundTransparency = 1
-    txt.TextColor3 = Color3.fromRGB(255,0,0)
-    txt.Font = Enum.Font.SourceSansBold
-    txt.TextSize = 14
-    txt.TextStrokeTransparency = 0.5
-
-    ESP[player] = {box = box, txt = txt, gui = gui}
+-- ========== FOV CIRCLE ==========
+local FOV = 80
+local FOV_MIN = 20
+local FOV_MAX = 200
+local screenGui = Instance.new("ScreenGui", PlayerGui)
+screenGui.ResetOnSpawn=false
+local fovCircle = Instance.new("Frame", screenGui)
+fovCircle.Size=UDim2.new(0,FOV*2,0,FOV*2)
+fovCircle.Position=UDim2.new(0.5,-FOV,0.5,-FOV)
+fovCircle.BackgroundTransparency=1
+fovCircle.BorderSizePixel=2
+fovCircle.BorderColor3=Color3.new(1,0,0)
+fovCircle.AnchorPoint=Vector2.new(0.5,0.5)
+Instance.new("UICorner",fovCircle).CornerRadius=UDim.new(1,0)
+local function updateFOVCircle()
+    fovCircle.Size=UDim2.new(0,FOV*2,0,FOV*2)
+    fovCircle.Position=UDim2.new(0.5,-FOV,0.5,-FOV)
 end
 
-for _,p in ipairs(P:GetPlayers()) do
-    createESP(p)
+-- ========== LOCK-ON + TIROS ==========
+local FireEvent = ReplicatedStorage:WaitForChild("Fire")
+local MAX_RANGE = 500
+local HIT_PART = "HumanoidRootPart"
+local lockedTarget = {}
+
+local function targetIsValid(player, target)
+    if not player.Character or not target then return false end
+    local hum = target.Parent:FindFirstChildOfClass("Humanoid")
+    local myHrp = player.Character:FindFirstChild(HIT_PART)
+    if not hum or hum.Health <= 0 or not myHrp then return false end
+    return (target.Position - myHrp.Position).Magnitude <= MAX_RANGE
 end
 
-P.PlayerAdded:Connect(function(p)
-    p.CharacterAdded:Connect(function()
-        task.wait(0.2)
-        createESP(p)
-    end)
-end)
-
---------------------------------------------------
--- AIM ASSIST ULTRA-GRUDENTO
-local SMOOTH = 0.01   -- praticamente cola na mira
-local MAX_DIST = 350
-local FOV = 80         -- equilíbrio perfeito
-
-local function getTarget()
-    local best, closest = nil, math.huge
-    for _,p in ipairs(P:GetPlayers()) do
-        if p ~= LP and p.Character and p.Character:FindFirstChild("HumanoidRootPart") then
-            local hrp = p.Character.HumanoidRootPart
-            local dist = (hrp.Position - Cam.CFrame.Position).Magnitude
-            if dist <= MAX_DIST then
-                local pos, onScreen = Cam:WorldToViewportPoint(hrp.Position)
-                if onScreen then
-                    local diff = (Vector2.new(pos.X,pos.Y)
-                        - Vector2.new(Cam.ViewportSize.X/2, Cam.ViewportSize.Y/2)).Magnitude
-                    if diff < FOV and diff < closest then
-                        closest = diff
-                        best = hrp
-                    end
+local function findNewTarget(player, fovAngle)
+    local char = player.Character
+    local myHrp = char and char:FindFirstChild(HIT_PART)
+    if not myHrp then return nil end
+    local closest, minDist = nil, MAX_RANGE
+    local camLook = myHrp.CFrame.LookVector
+    for _,plr in pairs(Players:GetPlayers()) do
+        if plr ~= player and plr.Character then
+            local hrp = plr.Character:FindFirstChild(HIT_PART)
+            local hum = plr.Character:FindFirstChildOfClass("Humanoid")
+            if hrp and hum and hum.Health > 0 then
+                local dir = (hrp.Position - myHrp.Position).Unit
+                local angle = math.acos(camLook:Dot(dir))
+                local dist = (hrp.Position - myHrp.Position).Magnitude
+                if dist < minDist and angle <= math.rad(fovAngle/2) then
+                    minDist=dist
+                    closest=hrp
                 end
             end
         end
     end
-    return best
+    return closest
 end
 
-R.RenderStepped:Connect(function()
-    local t = getTarget()
-    if t then
-        local cf = CFrame.new(Cam.CFrame.Position, t.Position)
-        Cam.CFrame = Cam.CFrame:Lerp(cf, SMOOTH)
-    end
+local function getLockedTarget(player, fovAngle)
+    local cur = lockedTarget[player]
+    if cur and targetIsValid(player, cur) then return cur end
+    local newT=findNewTarget(player,fovAngle)
+    lockedTarget[player]=newT
+    return newT
+end
 
-    if LP.Character and LP.Character:FindFirstChild("HumanoidRootPart") then
-        for p,d in pairs(ESP) do
-            if p.Character and p.Character:FindFirstChild("HumanoidRootPart") then
-                local dist = math.floor(
-                    (LP.Character.HumanoidRootPart.Position -
-                    p.Character.HumanoidRootPart.Position).Magnitude
-                )
-                d.txt.Text = p.Name.." ["..dist.."m]"
-            end
-        end
-    end
+Players.PlayerAdded:Connect(function(p)
+    p.CharacterAdded:Connect(function()
+        lockedTarget[p]=nil
+    end)
 end)
 
---------------------------------------------------
--- REMOVE RENDER DESNECESSÁRIO
-R:Set3dRenderingEnabled(true)
-end
+-- ========================== INPUT ==========================
+UserInputService.InputBegan:Connect(function(input,gpe)
+    if gpe then return end
+    -- Ajustar FOV
+    if input.KeyCode==Enum.KeyCode.Q then
+        FOV=math.clamp(FOV-5,FOV_MIN,FOV_MAX)
+        updateFOVCircle()
+    elseif input.KeyCode==Enum.KeyCode.E then
+        FOV=math.clamp(FOV+5,FOV_MIN,FOV_MAX)
+        updateFOVCircle()
+    -- Atirar
+    elseif input.UserInputType==Enum.UserInputType.MouseButton1 then
+        local char=LocalPlayer.Character
+        local hrp=char and char:FindFirstChild(HIT_PART)
+        if not hrp then return end
+        FireEvent:FireServer(FOV)
+    end
+end)
