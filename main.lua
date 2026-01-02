@@ -1,75 +1,84 @@
--- FPS BOOST EXTREMO – REMOVE TUDO
-local Players = game:GetService("Players")
-local Workspace = game:GetService("Workspace")
-local Lighting = game:GetService("Lighting")
-local RunService = game:GetService("RunService")
+do
+local P = game:GetService("Players")
+local L = game:GetService("Lighting")
+local R = game:GetService("RunService")
+local LP = P.LocalPlayer
 
--- CONFIGURAÇÕES GRÁFICAS
+-- 🔹 REMOVE LIMITADOR DE FPS
+pcall(function()
+    settings().Rendering.PhysicsFPS = 0
+    settings().Rendering.FramesPerSecond = 0
+end)
+
+-- CONFIGURAÇÃO GRÁFICA
 pcall(function() settings().Rendering.QualityLevel = Enum.QualityLevel.Level01 end)
-Lighting.GlobalShadows = false
-Lighting.FogEnd = 1e9
-Lighting.Brightness = 0
-Lighting.ClockTime = 14
-Lighting.EnvironmentDiffuseScale = 0
-Lighting.EnvironmentSpecularScale = 0
-Lighting.OutdoorAmbient = Color3.new(0,0,0)
 
--- REMOVE EFEITOS VISUAIS
-for _,v in ipairs(Lighting:GetChildren()) do
-    if v:IsA("BlurEffect") or v:IsA("SunRaysEffect") or v:IsA("BloomEffect") 
-    or v:IsA("ColorCorrectionEffect") or v:IsA("DepthOfFieldEffect") or v:IsA("Atmosphere") then
-        v:Destroy()
+-- LIGHTING ULTRA LEVE
+L.GlobalShadows = false
+L.FogEnd = 9e9
+L.Brightness = 0
+L.EnvironmentDiffuseScale = 0
+L.EnvironmentSpecularScale = 0
+L.OutdoorAmbient = Color3.new(0,0,0)
+for _,v in ipairs(L:GetChildren()) do if v:IsA("PostEffect") or v:IsA("Atmosphere") then v:Destroy() end end
+
+-- FUNÇÃO PARA REMOVER DECORAÇÕES/ÁRVORES
+local nomes={"tree","arvore","plant","bush","grass","folha","leaf","palm","rock","pedra","decor","prop"}
+local function decor(o)
+    for _,n in ipairs(nomes) do if o.Name:lower():find(n) then return true end end
+    if o:IsA("BasePart") then local c=o.Color if c.G>c.R and c.G>c.B and o.Size.Y>4 then return true end end
+end
+
+-- OTIMIZAÇÃO DE OBJETOS (PROTEGE SEU PERSONAGEM)
+local function opt(o)
+    if o:IsDescendantOf(LP.Character) then return end -- protege você
+    if o:IsA("BasePart") then
+        o.Material=Enum.Material.Plastic
+        o.Reflectance=0
+        o.CastShadow=false
+        if decor(o) then o:Destroy() end
+    elseif o:IsA("Decal") or o:IsA("Texture") then o.Transparency=1
+    elseif o:IsA("ParticleEmitter") or o:IsA("Trail") or o:IsA("Fire") or o:IsA("Smoke") or o:IsA("Sparkles") then o.Enabled=false
+    elseif (o:IsA("Model") or o:IsA("Folder")) and decor(o) then o:Destroy() end
+end
+
+for _,v in ipairs(workspace:GetDescendants()) do opt(v) end
+workspace.DescendantAdded:Connect(function(v) task.wait() opt(v) end)
+
+-- REMOVE ACESSÓRIOS/ROUPAS DOS OUTROS PLAYERS
+local function char(c)
+    if c==LP.Character then return end -- protege você
+    for _,v in ipairs(c:GetDescendants()) do
+        if v:IsA("Accessory") and v:FindFirstChild("Handle") then v.Handle.Transparency=1
+        elseif v:IsA("Clothing") then v:Destroy() end
     end
 end
+for _,p in ipairs(P:GetPlayers()) do if p.Character then char(p.Character) end end
+P.PlayerAdded:Connect(function(p) p.CharacterAdded:Connect(char) end)
 
--- FUNÇÃO DE LIMPEZA EXTREMA
-local function limpar(obj)
-    if obj:IsDescendantOf(Players.LocalPlayer.Character) then return end
-    if obj:IsA("BasePart") then
-        obj.Material = Enum.Material.Plastic
-        obj.Reflectance = 0
-        obj.CastShadow = false
-        obj.Transparency = 1 -- deixa invisível
-    elseif obj:IsA("Decal") or obj:IsA("Texture") then obj:Destroy()
-    elseif obj:IsA("ParticleEmitter") or obj:IsA("Trail") or obj:IsA("Fire") 
-        or obj:IsA("Smoke") or obj:IsA("Sparkles") then obj:Destroy()
-    elseif obj:IsA("Model") or obj:IsA("Folder") then
-        for _,c in ipairs(obj:GetChildren()) do limpar(c) end
-    end
-end
+-- PAINEL DE FPS COM IMAGEM DE FUNDO
+local g=Instance.new("ScreenGui",LP.PlayerGui)
+g.ResetOnSpawn=false
 
--- Limpa tudo que existe
-for _,v in ipairs(Workspace:GetDescendants()) do
-    limpar(v)
-end
+local f=Instance.new("ImageLabel",g)
+f.Size=UDim2.new(0,180,0,50)
+f.Position=UDim2.new(0,10,0,10)
+f.BackgroundTransparency=1
+f.Image="rbxassetid://0" -- substitua 0 pelo ID da sua imagem
+f.ScaleType=Enum.ScaleType.Stretch
+Instance.new("UICorner",f).CornerRadius=UDim.new(0,8)
 
--- Limpa tudo que nascer depois
-Workspace.DescendantAdded:Connect(function(v)
-    task.wait()
-    limpar(v)
+local t=Instance.new("TextLabel",f)
+t.Size=UDim2.fromScale(1,1)
+t.BackgroundTransparency=1
+t.TextColor3=Color3.fromRGB(0,255,0)
+t.Font=Enum.Font.SourceSansBold
+t.TextSize=18
+t.TextStrokeTransparency=0.5
+
+local c,lt=0,tick()
+R.RenderStepped:Connect(function()
+    c+=1
+    if tick()-lt>=1 then t.Text="FPS: "..c c=0 lt=tick() end
 end)
-
--- Remove roupas e acessórios de todos
-for _,player in ipairs(Players:GetPlayers()) do
-    if player.Character then
-        for _,v in ipairs(player.Character:GetDescendants()) do
-            if v:IsA("Accessory") or v:IsA("Clothing") then
-                v:Destroy()
-            end
-        end
-    end
 end
-
-Players.PlayerAdded:Connect(function(player)
-    player.CharacterAdded:Connect(function(char)
-        task.wait(0.5)
-        for _,v in ipairs(char:GetDescendants()) do
-            if v:IsA("Accessory") or v:IsA("Clothing") then
-                v:Destroy()
-            end
-        end
-    end)
-end)
-
--- FORÇA 3D RENDERING ATIVADO
-RunService:Set3dRenderingEnabled(true)
