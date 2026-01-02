@@ -117,3 +117,7 @@ LP.CharacterAdded:Connect(function(char)
     task.wait(0.1)
     aumentarHitbox(LP, 1.5)
 end)
+
+-- 🔹 REMOVE RENDER DESNECESSÁRIO
+R:Set3dRenderingEnabled(true)
+end
