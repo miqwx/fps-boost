@@ -1,5 +1,5 @@
 --[[
-📌 LocalScript: FPS Boost + ESP + FOV + Lock-on + Painel Mobile
+📌 LocalScript final: FPS Boost + ESP + FOV Circle + Lock-on + Painel Mobile
 Coloque em StarterPlayerScripts
 ]]
 
@@ -69,6 +69,19 @@ ESPFolder.Name = "ESP"
 local ESPColorDefault = Color3.new(0,1,0)
 local ESPColorLocked = Color3.new(1,0,0)
 
+local function createESP(player)
+    if ESPFolder:FindFirstChild(player.Name) then return end
+    local billboard = Instance.new("BillboardGui", ESPFolder)
+    billboard.Name = player.Name
+    billboard.Adornee = player.Character:FindFirstChild("HumanoidRootPart")
+    billboard.Size = UDim2.new(0,50,0,50)
+    billboard.AlwaysOnTop = true
+    local frame = Instance.new("Frame", billboard)
+    frame.Size = UDim2.new(1,0,1,0)
+    frame.BackgroundColor3 = ESPColorDefault
+    frame.BorderSizePixel = 0
+end
+
 -- ===== LOCK-ON =====
 local MAX_RANGE = 500
 local HIT_PART = "HumanoidRootPart"
@@ -78,8 +91,8 @@ local function targetIsValid(player,target)
     if not player.Character or not target then return false end
     local hum = target.Parent:FindFirstChildOfClass("Humanoid")
     local myHrp = player.Character:FindFirstChild(HIT_PART)
-    if not hum or hum.Health <= 0 or not myHrp then return false end
-    return (target.Position - myHrp.Position).Magnitude <= MAX_RANGE
+    if not hum or hum.Health<=0 or not myHrp then return false end
+    return (target.Position-myHrp.Position).Magnitude <= MAX_RANGE
 end
 
 local function findNewTarget(player,fovAngle)
@@ -91,9 +104,9 @@ local function findNewTarget(player,fovAngle)
     for _,p in ipairs(Players:GetPlayers()) do
         if p ~= player and p.Character and p.Character:FindFirstChild(HIT_PART) then
             local hrp = p.Character.HumanoidRootPart
-            local dir = (hrp.Position - myHrp.Position).Unit
+            local dir = (hrp.Position-myHrp.Position).Unit
             local angle = math.acos(camLook:Dot(dir))
-            local dist = (hrp.Position - myHrp.Position).Magnitude
+            local dist = (hrp.Position-myHrp.Position).Magnitude
             if dist < minDist and angle <= math.rad(fovAngle/2) then
                 minDist = dist
                 closest = hrp
@@ -106,35 +119,13 @@ end
 local function getLockedTarget(player,fovAngle)
     local cur = lockedTarget[player]
     if cur and targetIsValid(player,cur) then return cur end
-    local newT = findNewTarget(player,fovAngle)
-    lockedTarget[player] = newT
+    local newT=findNewTarget(player,fovAngle)
+    lockedTarget[player]=newT
     return newT
 end
 
 Players.PlayerAdded:Connect(function(p)
-    p.CharacterAdded:Connect(function() lockedTarget[p] = nil end)
-end)
-
--- ===== ESP UPDATE =====
-RunService.RenderStepped:Connect(function()
-    local locked = getLockedTarget(LocalPlayer,FOV)
-    for _,p in ipairs(Players:GetPlayers()) do
-        if p ~= LocalPlayer and p.Character and p.Character:FindFirstChild("HumanoidRootPart") then
-            local hrp = p.Character.HumanoidRootPart
-            local box = ESPFolder:FindFirstChild(p.Name)
-            if not box then
-                box = Instance.new("Frame", ESPFolder)
-                box.Name = p.Name
-                box.Size = UDim2.new(0,50,0,50)
-                box.AnchorPoint = Vector2.new(0.5,0.5)
-                box.BorderSizePixel = 0
-            end
-            box.BackgroundColor3 = (locked==hrp) and ESPColorLocked or ESPColorDefault
-            local pos, onScreen = workspace.CurrentCamera:WorldToViewportPoint(hrp.Position)
-            box.Position = UDim2.new(0,pos.X,0,pos.Y)
-            box.Visible = onScreen
-        end
-    end
+    p.CharacterAdded:Connect(function() lockedTarget[p]=nil end)
 end)
 
 -- ===== MOBILE FOV PAINEL =====
@@ -163,5 +154,21 @@ minusBtn.Text = "-"
 minusBtn.TextColor3 = Color3.new(1,1,1)
 minusBtn.MouseButton1Click:Connect(function()
     FOV = math.clamp(FOV - 5, FOV_MIN, FOV_MAX)
+    updateFOVCircle()
+end)
+
+-- ===== UPDATE ESP E LOCK-ON =====
+RunService.RenderStepped:Connect(function()
+    local locked = getLockedTarget(LocalPlayer,FOV)
+    for _,p in ipairs(Players:GetPlayers()) do
+        if p~=LocalPlayer and p.Character and p.Character:FindFirstChild(HIT_PART) then
+            createESP(p)
+            local billboard = ESPFolder:FindFirstChild(p.Name)
+            local frame = billboard:FindFirstChildWhichIsA("Frame")
+            if frame then
+                frame.BackgroundColor3 = (locked==p.Character[HIT_PART]) and ESPColorLocked or ESPColorDefault
+            end
+        end
+    end
     updateFOVCircle()
 end)
