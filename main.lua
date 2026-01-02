@@ -121,7 +121,7 @@ end)
 -- AIM ASSIST ULTRA-GRUDENTO
 local SMOOTH = 0.01   -- praticamente cola na mira
 local MAX_DIST = 350
-local FOV = 130        -- mira ampla
+local FOV = 80         -- equilíbrio perfeito
 
 local function getTarget()
     local best, closest = nil, math.huge
