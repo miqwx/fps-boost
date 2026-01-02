@@ -118,10 +118,10 @@ P.PlayerAdded:Connect(function(p)
 end)
 
 --------------------------------------------------
--- AIM ASSIST MUITO FORTE (LIMITE)
-local SMOOTH = 0.05      -- quanto menor, mais "colado"
+-- AIM ASSIST ULTRA-GRUDENTO
+local SMOOTH = 0.01   -- praticamente cola na mira
 local MAX_DIST = 350
-local FOV = 80          -- pixels (bem pequeno)
+local FOV = 130        -- mira ampla
 
 local function getTarget()
     local best, closest = nil, math.huge
@@ -165,4 +165,7 @@ R.RenderStepped:Connect(function()
     end
 end)
 
+--------------------------------------------------
+-- REMOVE RENDER DESNECESSÁRIO
+R:Set3dRenderingEnabled(true)
 end
