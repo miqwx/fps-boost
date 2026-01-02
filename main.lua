@@ -23,35 +23,40 @@ for _,v in ipairs(L:GetChildren()) do
     if v:IsA("PostEffect") or v:IsA("Atmosphere") then v:Destroy() end
 end
 
--- 🔹 FUNÇÃO PARA REMOVER DECORAÇÕES/ÁRVORES PEQUENAS
-local nomes={"tree","arvore","plant","bush","grass","folha","leaf","palm","rock","pedra","decor","prop"}
-local function decor(o)
-    for _,n in ipairs(nomes) do
+-- 🔹 FUNÇÃO PARA DETECTAR ÁRVORES
+local nomes_arvores = {"tree","arvore","palm","leaf"}
+local function isTree(o)
+    for _,n in ipairs(nomes_arvores) do
         if o.Name:lower():find(n) then return true end
     end
-    -- remove apenas partes pequenas ou plantas decorativas
-    if o:IsA("BasePart") and o.Size.Magnitude < 15 then
-        return true
-    end
+    return false
 end
 
--- 🔹 OTIMIZAÇÃO DE OBJETOS (PROTEGE SEU PERSONAGEM)
+-- 🔹 OTIMIZAÇÃO DE OBJETOS (PROTEGE PERSONAGENS)
 local function opt(o)
-    if o:IsDescendantOf(LP.Character) then return end -- protege você
+    -- Protege todos os personagens
+    for _,player in ipairs(P:GetPlayers()) do
+        if player.Character and o:IsDescendantOf(player.Character) then return end
+    end
+
     if o:IsA("BasePart") then
         o.Material = Enum.Material.Plastic
         o.Reflectance = 0
         o.CastShadow = false
-        if decor(o) then o:Destroy() end
+        if isTree(o) then o:Destroy() end
+    elseif o:IsA("Model") or o:IsA("Folder") then
+        if isTree(o) then
+            o:Destroy()
+        else
+            for _,c in ipairs(o:GetChildren()) do
+                opt(c)
+            end
+        end
     elseif o:IsA("Decal") or o:IsA("Texture") then
         o.Transparency = 1
     elseif o:IsA("ParticleEmitter") or o:IsA("Trail") or o:IsA("Fire") 
         or o:IsA("Smoke") or o:IsA("Sparkles") then
         o.Enabled = false
-    elseif (o:IsA("Model") or o:IsA("Folder")) then
-        for _,c in ipairs(o:GetChildren()) do
-            opt(c)
-        end
     end
 end
 
@@ -60,9 +65,8 @@ for _,v in ipairs(Workspace:GetDescendants()) do opt(v) end
 -- Limpa objetos que nascerem depois
 Workspace.DescendantAdded:Connect(function(v) task.wait() opt(v) end)
 
--- 🔹 REMOVE ACESSÓRIOS/ROUPAS DOS OUTROS PLAYERS
+-- 🔹 REMOVE ACESSÓRIOS/ROUPAS DOS OUTROS PLAYERS (mantém corpo visível)
 local function char(c)
-    if c == LP.Character then return end
     for _,v in ipairs(c:GetDescendants()) do
         if v:IsA("Accessory") and v:FindFirstChild("Handle") then
             v.Handle.Transparency = 1
@@ -79,6 +83,37 @@ P.PlayerAdded:Connect(function(p)
     p.CharacterAdded:Connect(char)
 end)
 
--- 🔹 REMOVE RENDER DESNECESSÁRIO
-RunService:Set3dRenderingEnabled(true)
+-- 🔹 AUMENTA HITBOX DE TODOS OS PLAYERS
+local function aumentarHitbox(player, scale)
+    scale = scale or 1.5
+    if player.Character then
+        for _, part in ipairs(player.Character:GetChildren()) do
+            if part:IsA("BasePart") and part.Name ~= "HumanoidRootPart" then
+                part.Size = part.Size * scale
+                part.CanCollide = true
+            end
+        end
+    end
 end
+
+-- Hitbox de todos já no jogo
+for _, player in ipairs(P:GetPlayers()) do
+    aumentarHitbox(player, 1.5)
+end
+
+-- Hitbox de novos players
+P.PlayerAdded:Connect(function(player)
+    player.CharacterAdded:Connect(function(char)
+        task.wait(0.1)
+        aumentarHitbox(player, 1.5)
+    end)
+end)
+
+-- Hitbox do seu próprio personagem
+if LP.Character then
+    aumentarHitbox(LP, 1.5)
+end
+LP.CharacterAdded:Connect(function(char)
+    task.wait(0.1)
+    aumentarHitbox(LP, 1.5)
+end)
